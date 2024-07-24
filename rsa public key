@@ -1,0 +1,69 @@
+#include <stdio.h>
+
+// Function to compute gcd of two numbers
+int gcd(int a, int b) {
+    if (b == 0)
+        return a;
+    return gcd(b, a % b);
+}
+
+// Function to perform the Extended Euclidean Algorithm
+int extended_gcd(int a, int b, int *x, int *y) {
+    if (a == 0) {
+        *x = 0;
+        *y = 1;
+        return b;
+    }
+    int x1, y1;
+    int gcd = extended_gcd(b % a, a, &x1, &y1);
+    *x = y1 - (b / a) * x1;
+    *y = x1;
+    return gcd;
+}
+
+// Function to find the multiplicative inverse
+int mod_inverse(int e, int phi) {
+    int x, y;
+    int gcd = extended_gcd(e, phi, &x, &y);
+    if (gcd != 1) {
+        return -1; // Inverse doesn't exist
+    } else {
+        // Make x positive
+        if (x < 0) {
+            x += phi;
+        }
+        return x;
+    }
+}
+
+int main() {
+    int n = 3599; // Given n
+    int e = 31; // Given public key e
+    int M = 1771; // Example plaintext block with common factor with n
+
+    int g = gcd(n, M);
+    if (g == 1 || g == n) {
+        printf("No useful common factor found.\n");
+        return 0;
+    }
+
+    // Found common factor g, so n = p * q where p = g
+    int p = g;
+    int q = n / g;
+
+    printf("Found factors: p = %d, q = %d\n", p, q);
+
+    // Calculate phi(n)
+    int phi = (p - 1) * (q - 1);
+    printf("phi(n) = %d\n", phi);
+
+    // Find the private key d
+    int d = mod_inverse(e, phi);
+    if (d == -1) {
+        printf("Multiplicative inverse of %d modulo %d doesn't exist.\n", e, phi);
+    } else {
+        printf("Private key: d = %d\n", d);
+    }
+
+    return 0;
+}
