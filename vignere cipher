@@ -1,0 +1,30 @@
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>  
+
+void encrypt(char *plaintext, int *key, int key_length, char *ciphertext) {
+    int i;
+    for (i = 0; plaintext[i] != '\0'; i++) {
+        if (isalpha(plaintext[i])) {
+            char offset = isupper(plaintext[i]) ? 'A' : 'a';
+            ciphertext[i] = ((plaintext[i] - offset + key[i % key_length]) % 26) + offset;
+        } else {
+            ciphertext[i] = plaintext[i];
+        }
+    }
+    ciphertext[i] = '\0'; 
+}
+
+int main() {
+    char plaintext[] = "send more money";
+    int key[] = {9, 0, 1, 7, 23, 15, 21, 14, 11, 11, 2, 8, 9};
+    int key_length = sizeof(key) / sizeof(key[0]);
+    char ciphertext[strlen(plaintext) + 1]; 
+
+    encrypt(plaintext, key, key_length, ciphertext);
+
+    printf("Plaintext: %s\n", plaintext);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    return 0;
+}
