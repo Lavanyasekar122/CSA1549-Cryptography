@@ -1,0 +1,96 @@
+#include <stdio.h>
+#include <stdint.h>
+#define KEY_SIZE 10
+#define DATA_SIZE 8 
+int IP[] = {2, 6, 3, 1, 4, 8, 5, 7};
+int IP_INV[] = {4, 1, 3, 5, 7, 2, 8, 6};
+int P10[] = {3, 5, 2, 7, 4, 10, 1, 9, 8, 6};
+int P8[] = {6, 3, 7, 4, 8, 5, 10, 9};
+int S0[4][4] = {
+    {1, 0, 3, 2},
+    {3, 2, 1, 0},
+    {0, 2, 1, 3},
+    {3, 1, 3, 2}
+};
+
+int S1[4][4] = {
+    {0, 1, 2, 3},
+    {2, 0, 1, 3},
+    {3, 0, 1, 0},
+    {2, 1, 0, 3}
+};
+uint8_t permute(uint8_t data, int *permutation, int size);
+void generateKeys(uint8_t key[], uint8_t *key1, uint8_t *key2);
+uint8_t sbox(uint8_t data, int sbox[][4]);
+uint8_t sdes(uint8_t data, uint8_t key, int encrypt);
+
+int main() {
+    uint8_t plaintext[DATA_SIZE] = {0x01, 0x23}; 
+    uint8_t ciphertext[DATA_SIZE] = {0xF4, 0x0B}; 
+    uint8_t key[KEY_SIZE] = {0x1F, 0x3D};
+    uint8_t iv = 0xAA;
+    printf("Encryption:\n");
+    uint8_t previous_ciphertext = iv;
+    for (int i = 0; i < DATA_SIZE; i++) {
+        uint8_t current_plaintext = plaintext[i];
+        uint8_t xor_result = current_plaintext ^ previous_ciphertext;
+        uint8_t current_ciphertext = sdes(xor_result, key[0], 1);
+        ciphertext[i] = current_ciphertext;
+        previous_ciphertext = current_ciphertext;
+        
+        printf("Block %d: Plaintext = 0x%02X, Ciphertext = 0x%02X\n", i+1, current_plaintext, current_ciphertext);
+    }
+    printf("\nDecryption:\n");
+    previous_ciphertext = iv;
+    for (int i = 0; i < DATA_SIZE; i++) {
+        uint8_t current_ciphertext = ciphertext[i];
+        uint8_t decrypted_xor_result = sdes(current_ciphertext, key[0], 0);
+        uint8_t current_plaintext = decrypted_xor_result ^ previous_ciphertext;
+        plaintext[i] = current_plaintext;
+        previous_ciphertext = current_ciphertext;
+        
+        printf("Block %d: Ciphertext = 0x%02X, Plaintext = 0x%02X\n", i+1, current_ciphertext, current_plaintext);
+    }
+    
+    return 0;
+}
+uint8_t permute(uint8_t data, int *permutation, int size) {
+    uint8_t result = 0;
+    for (int i = 0; i < size; i++) {
+        result <<= 1;
+        result |= (data >> (8 - permutation[i])) & 0x01;
+    }
+    return result;
+}
+uint8_t sbox(uint8_t data, int sbox[][4]) {
+    int row = ((data & 0x80) >> 6) | ((data & 0x04) >> 2);
+    int col = (data & 0x78) >> 3;
+    return sbox[row][col];
+}
+uint8_t sdes(uint8_t data, uint8_t key, int encrypt) {
+    uint8_t permuted_data = permute(data, IP, 8);
+    uint8_t key1, key2;
+    generateKeys(&key, &key1, &key2);
+    uint8_t ip_data = permuted_data;
+    uint8_t left = ip_data >> 4;
+    uint8_t right = ip_data & 0x0F;
+    uint8_t round_input = right;
+    uint8_t sbox_output = sbox(round_input, S0);
+    uint8_t p4_output = permute(sbox_output, P8, 4);
+    uint8_t new_right = left ^ p4_output;
+    uint8_t new_ip_data = (right << 4) | new_right;
+    uint8_t encrypted_data = permute(new_ip_data, IP_INV, 8);
+	return encrypted_data;
+}
+void generateKeys(uint8_t key[], uint8_t *key1, uint8_t *key2) {
+    uint8_t p10_output = permute(key[0], P10, 10);
+    uint8_t left_half = p10_output >> 5;
+    uint8_t right_half = p10_output & 0x1F;
+    left_half = ((left_half << 1) & 0x1E) | ((left_half >> 4) & 0x01);
+    right_half = ((right_half << 1) & 0x1E) | ((right_half >> 4) & 0x01);
+    uint8_t combined_halves = (left_half << 5) | right_half;
+    *key1 = permute(combined_halves, P8, 8);
+    left_half = ((left_half << 2) & 0x1C) | ((left_half >> 3) & 0x03);
+    combined_halves = (left_half << 5) | right_half;
+    *key2 = permute(combined_halves, P8, 8);
+}
