@@ -1,0 +1,50 @@
+#include <stdio.h>
+
+// Function to perform the Extended Euclidean Algorithm
+int extended_gcd(int a, int b, int *x, int *y) {
+    if (a == 0) {
+        *x = 0;
+        *y = 1;
+        return b;
+    }
+    int x1, y1;
+    int gcd = extended_gcd(b % a, a, &x1, &y1);
+    *x = y1 - (b / a) * x1;
+    *y = x1;
+    return gcd;
+}
+
+// Function to find the multiplicative inverse
+int mod_inverse(int e, int phi) {
+    int x, y;
+    int gcd = extended_gcd(e, phi, &x, &y);
+    if (gcd != 1) {
+        return -1; // Inverse doesn't exist
+    } else {
+        // Make x positive
+        if (x < 0) {
+            x += phi;
+        }
+        return x;
+    }
+}
+
+int main() {
+    int p = 59;
+    int q = 61;
+    int n = p * q;
+    int phi = (p - 1) * (q - 1);
+    int e = 31;
+
+    printf("Public key: (e = %d, n = %d)\n", e, n);
+    printf("phi(n) = %d\n", phi);
+
+    int d = mod_inverse(e, phi);
+    if (d == -1) {
+        printf("Multiplicative inverse of %d modulo %d doesn't exist.\n", e, phi);
+    } else {
+        printf("Private key: d = %d\n", d);
+    }
+
+    return 0;
+}
