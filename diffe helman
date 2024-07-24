@@ -1,0 +1,42 @@
+#include <stdio.h>
+#include <math.h>
+
+// Function to compute (base^exponent) % modulus using modular exponentiation
+unsigned long long mod_exp(unsigned long long base, unsigned long long exponent, unsigned long long modulus) {
+    unsigned long long result = 1;
+    base = base % modulus;
+    while (exponent > 0) {
+        if (exponent % 2 == 1) {
+            result = (result * base) % modulus;
+        }
+        exponent = exponent >> 1;
+        base = (base * base) % modulus;
+    }
+    return result;
+}
+
+int main() {
+    unsigned long long p = 23; // Public prime number
+    unsigned long long g = 5;  // Public base (primitive root mod p)
+
+    unsigned long long a = 6;  // Alice's private key
+    unsigned long long b = 15; // Bob's private key
+
+    // Alice computes her public value
+    unsigned long long A = mod_exp(g, a, p);
+    printf("Alice's public value: %llu\n", A);
+
+    // Bob computes his public value
+    unsigned long long B = mod_exp(g, b, p);
+    printf("Bob's public value: %llu\n", B);
+
+    // Alice computes the shared secret key
+    unsigned long long shared_secret_A = mod_exp(B, a, p);
+    printf("Alice's shared secret: %llu\n", shared_secret_A);
+
+    // Bob computes the shared secret key
+    unsigned long long shared_secret_B = mod_exp(A, b, p);
+    printf("Bob's shared secret: %llu\n", shared_secret_B);
+
+    return 0;
+}
