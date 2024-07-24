@@ -1,0 +1,65 @@
+#include <stdio.h>
+#include <string.h>
+
+#define BLOCK_SIZE 16 // Assume a block size of 16 bytes
+
+void mock_block_cipher(unsigned char *key, unsigned char *input, unsigned char *output) {
+    // A mock block cipher function (e.g., a simplified version of AES)
+    // For demonstration purposes, we will XOR the key with the input to produce the output
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        output[i] = input[i] ^ key[i];
+    }
+}
+
+void xor_blocks(unsigned char *block1, unsigned char *block2, unsigned char *output) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        output[i] = block1[i] ^ block2[i];
+    }
+}
+
+void cbc_mac(unsigned char *key, unsigned char *message, int message_len, unsigned char *mac) {
+    unsigned char iv[BLOCK_SIZE] = {0}; // Initialization vector (zero for CBC-MAC)
+    unsigned char block[BLOCK_SIZE];
+    unsigned char cipher_output[BLOCK_SIZE];
+    
+    memcpy(block, iv, BLOCK_SIZE);
+
+    for (int i = 0; i < message_len; i += BLOCK_SIZE) {
+        xor_blocks(block, message + i, block);
+        mock_block_cipher(key, block, cipher_output);
+        memcpy(block, cipher_output, BLOCK_SIZE);
+    }
+
+    memcpy(mac, cipher_output, BLOCK_SIZE);
+}
+
+int main() {
+    unsigned char key[BLOCK_SIZE] = "thisisakey123456"; // Example key
+    unsigned char message[BLOCK_SIZE] = "examplemessage!"; // Example one-block message
+    unsigned char mac[BLOCK_SIZE];
+
+    cbc_mac(key, message, BLOCK_SIZE, mac);
+
+    printf("MAC for one-block message: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02x", mac[i]);
+    }
+    printf("\n");
+
+    unsigned char new_message[2 * BLOCK_SIZE];
+    memcpy(new_message, message, BLOCK_SIZE);
+
+    unsigned char temp[BLOCK_SIZE];
+    xor_blocks(message, mac, temp);
+    memcpy(new_message + BLOCK_SIZE, temp, BLOCK_SIZE);
+
+    cbc_mac(key, new_message, 2 * BLOCK_SIZE, mac);
+
+    printf("MAC for two-block message: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02x", mac[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
