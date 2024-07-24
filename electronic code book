@@ -1,0 +1,58 @@
+nclude <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#define BLOCK_SIZE 16
+void encrypt_block(uint8_t *block, uint8_t *key) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        block[i] ^= key[i];
+    }
+}
+void decrypt_block(uint8_t *block, uint8_t *key) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        block[i] ^= key[i];
+    }
+}
+
+
+void ecb_encrypt(uint8_t *plaintext, uint8_t *ciphertext, uint8_t *key, size_t length) {
+    for (size_t i = 0; i < length; i += BLOCK_SIZE) {
+        encrypt_block(&plaintext[i], key);
+        memcpy(&ciphertext[i], &plaintext[i], BLOCK_SIZE);
+    }
+}
+
+void ecb_decrypt(uint8_t *ciphertext, uint8_t *plaintext, uint8_t *key, size_t length) {
+    for (size_t i = 0; i < length; i += BLOCK_SIZE) {
+        
+        decrypt_block(&ciphertext[i], key);
+        
+        memcpy(&plaintext[i], &ciphertext[i], BLOCK_SIZE);
+    }
+}
+
+int main() {
+    
+    uint8_t key[BLOCK_SIZE] = {0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+                                0x09, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16};
+    uint8_t plaintext[] = "Hello, World!";
+    size_t length = strlen((char *)plaintext);
+    uint8_t ciphertext[length];
+
+    
+    ecb_encrypt(plaintext, ciphertext, key, length);
+
+    
+    printf("Ciphertext: ");
+    for (size_t i = 0; i < length; i++) {
+        printf("%02x", ciphertext[i]);
+    }
+    printf("\n");
+
+    
+    ecb_decrypt(ciphertext, plaintext, key, length);
+
+    
+    printf("Plaintext: %s\n", plaintext);
+
+    return 0;
+}
