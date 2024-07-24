@@ -1,0 +1,70 @@
+#include <stdio.h>
+#include <string.h>
+
+#define BLOCK_SIZE 16 // Assume a block size of 16 bytes (128 bits for this example)
+
+void mock_block_cipher(unsigned char *key, unsigned char *input, unsigned char *output) {
+    // A mock block cipher function (e.g., a simplified version of AES)
+    // For demonstration purposes, we will XOR the key with the input to produce the output
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        output[i] = input[i] ^ key[i];
+    }
+}
+
+void left_shift_one_bit(unsigned char *input, unsigned char *output) {
+    int carry = 0;
+    for (int i = BLOCK_SIZE - 1; i >= 0; i--) {
+        output[i] = (input[i] << 1) | carry;
+        carry = (input[i] & 0x80) ? 1 : 0;
+    }
+}
+
+void xor_with_constant(unsigned char *input, unsigned char *constant) {
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        input[i] ^= constant[i];
+    }
+}
+
+void generate_cmac_subkeys(unsigned char *key, unsigned char *k1, unsigned char *k2) {
+    unsigned char zero_block[BLOCK_SIZE] = {0};
+    unsigned char l[BLOCK_SIZE];
+    unsigned char const_rb[BLOCK_SIZE] = {0x87}; // This is the Rb constant for 128-bit block size
+    unsigned char const_rb64[BLOCK_SIZE] = {0x1B}; // This is the Rb constant for 64-bit block size
+
+    // Step 1: Apply the block cipher to the zero block
+    mock_block_cipher(key, zero_block, l);
+
+    // Step 2: Generate k1
+    left_shift_one_bit(l, k1);
+    if (l[0] & 0x80) { // If MSB of l is 1, XOR with Rb
+        xor_with_constant(k1, const_rb);
+    }
+
+    // Step 3: Generate k2
+    left_shift_one_bit(k1, k2);
+    if (k1[0] & 0x80) { // If MSB of k1 is 1, XOR with Rb
+        xor_with_constant(k2, const_rb);
+    }
+}
+
+int main() {
+    unsigned char key[BLOCK_SIZE] = "thisisakey123456"; // Example key
+    unsigned char k1[BLOCK_SIZE];
+    unsigned char k2[BLOCK_SIZE];
+
+    generate_cmac_subkeys(key, k1, k2);
+
+    printf("Subkey k1: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02x", k1[i]);
+    }
+    printf("\n");
+
+    printf("Subkey k2: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02x", k2[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
