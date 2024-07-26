@@ -1,0 +1,26 @@
+#include <stdio.h>
+
+int gcd(int a, int b) {
+    while (b != 0) {
+        int t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+int main() {
+    int n = 3599;
+    int plaintext_block = 323; // Example plaintext block with a common factor
+    int factor = gcd(plaintext_block, n);
+
+    if (factor != 1) {
+        printf("Found common factor: %d\n", factor);
+        int other_factor = n / factor;
+        printf("Other factor: %d\n", other_factor);
+    } else {
+        printf("No common factor found\n");
+    }
+
+    return 0;
+}
