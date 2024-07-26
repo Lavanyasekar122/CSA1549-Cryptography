@@ -1,0 +1,94 @@
+#include <stdio.h>
+#include <string.h>
+
+#define ALPHABET_SIZE 26
+#define MAX_TEXT_SIZE 1024
+const double english_frequencies[ALPHABET_SIZE] = {
+    8.167, 1.492, 2.782, 4.253, 12.702, 2.228, 2.015, 6.094, 6.966, 0.153,
+    0.772, 4.025, 2.406, 6.749, 7.507, 1.929, 0.095, 5.987, 6.327, 9.056,
+    2.758, 0.978, 2.360, 0.150, 1.974, 0.074
+};
+void analyze_frequencies(const char *text, double *frequencies) {
+    int counts[ALPHABET_SIZE] = {0};
+    int total_letters = 0;
+
+    
+    for (int i = 0; text[i] != '\0'; i++) {
+        if (text[i] >= 'a' && text[i] <= 'z') {
+            counts[text[i] - 'a']++;
+            total_letters++;
+        } else if (text[i] >= 'A' && text[i] <= 'Z') {
+            counts[text[i] - 'A']++;
+            total_letters++;
+        }
+    }
+
+    
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        frequencies[i] = (double)counts[i] / total_letters * 100;
+    }
+}
+
+double score_text(const char *text) {
+    double frequencies[ALPHABET_SIZE] = {0};
+    double score = 0.0;
+
+    analyze_frequencies(text, frequencies);
+
+    for (int i = 0; i < ALPHABET_SIZE; i++) {
+        score += frequencies[i] * english_frequencies[i];
+    }
+
+    return score;
+}
+
+
+void decrypt(const char *ciphertext, int shift, char *plaintext) {
+    for (int i = 0; ciphertext[i] != '\0'; i++) {
+        if (ciphertext[i] >= 'a' && ciphertext[i] <= 'z') {
+            plaintext[i] = 'a' + (ciphertext[i] - 'a' - shift + ALPHABET_SIZE) % ALPHABET_SIZE;
+        } else if (ciphertext[i] >= 'A' && ciphertext[i] <= 'Z') {
+            plaintext[i] = 'A' + (ciphertext[i] - 'A' - shift + ALPHABET_SIZE) % ALPHABET_SIZE;
+        } else {
+            plaintext[i] = ciphertext[i];
+        }
+    }
+    plaintext[strlen(ciphertext)] = '\0';
+}
+
+
+int main() {
+    char ciphertext[MAX_TEXT_SIZE];
+    char plaintext[MAX_TEXT_SIZE];
+    double scores[ALPHABET_SIZE];
+    int top_n;
+
+    
+    printf("Enter the ciphertext: ");
+    fgets(ciphertext, sizeof(ciphertext), stdin);
+    ciphertext[strcspn(ciphertext, "\n")] = '\0'; // Remove trailing newline
+
+    printf("Enter the number of top possible plaintexts to display: ");
+    scanf("%d", &top_n);
+
+    // Try all possible shifts and score them
+    for (int shift = 0; shift < ALPHABET_SIZE; shift++) {
+        decrypt(ciphertext, shift, plaintext);
+        scores[shift] = score_text(plaintext);
+    }
+
+    // Display top possible plaintexts
+    for (int i = 0; i < top_n; i++) {
+        int best_shift = 0;
+        for (int j = 1; j < ALPHABET_SIZE; j++) {
+            if (scores[j] > scores[best_shift]) {
+                best_shift = j;
+            }
+        }
+        decrypt(ciphertext, best_shift, plaintext);
+        printf("Possible plaintext #%d (shift %d): %s\n", i + 1, best_shift, plaintext);
+        scores[best_shift] = -1.0; // Invalidate this score
+    }
+
+    return 0;
+}
