@@ -1,0 +1,65 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+
+// RSA Encryption
+long long rsa_encrypt(int plaintext, int e, int n) {
+    long long ciphertext = 1;
+    for (int i = 0; i < e; i++) {
+        ciphertext = (ciphertext * plaintext) % n;
+    }
+    return ciphertext;
+}
+
+// RSA Decryption
+int rsa_decrypt(long long ciphertext, int d, int n) {
+    long long plaintext = 1;
+    for (int i = 0; i < d; i++) {
+        plaintext = (plaintext * ciphertext) % n;
+    }
+    return plaintext;
+}
+
+// Function to perform modular exponentiation
+long long mod_exp(long long base, int exp, int mod) {
+    long long result = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1) {
+            result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp /= 2;
+    }
+    return result;
+}
+
+int main() {
+    int n = 3233;  // Example modulus
+    int e = 17;    // Example public exponent
+    int d = 2753;  // Example private exponent
+
+    char message[] = "HELLO";
+    int message_len = strlen(message);
+    long long encrypted[message_len];
+    int decrypted[message_len];
+
+    printf("Original message: %s\n", message);
+
+    // Encrypt the message
+    for (int i = 0; i < message_len; i++) {
+        int plaintext = message[i] - 'A'; // Convert char to int (0-25)
+        encrypted[i] = rsa_encrypt(plaintext, e, n);
+        printf("%lld ", encrypted[i]);
+    }
+    printf("\n");
+
+    // Decrypt the message
+    for (int i = 0; i < message_len; i++) {
+        decrypted[i] = rsa_decrypt(encrypted[i], d, n) + 'A'; // Convert int to char
+        printf("%c", decrypted[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
