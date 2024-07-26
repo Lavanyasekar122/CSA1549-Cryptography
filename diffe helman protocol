@@ -1,0 +1,48 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+
+// Function to perform modular exponentiation
+long long mod_exp(long long base, int exp, int mod) {
+    long long result = 1;
+    while (exp > 0) {
+        if (exp % 2 == 1) {
+            result = (result * base) % mod;
+        }
+        base = (base * base) % mod;
+        exp /= 2;
+    }
+    return result;
+}
+
+int main() {
+    int p = 23; // Prime number
+    int g = 5;  // Primitive root modulo p
+
+    srand(time(0));
+    int a = rand() % (p-1) + 1; // Alice's private key
+    int b = rand() % (p-1) + 1; // Bob's private key
+
+    long long A = mod_exp(g, a, p); // Alice sends to Bob
+    long long B = mod_exp(g, b, p); // Bob sends to Alice
+
+    long long shared_key_A = mod_exp(B, a, p); // Alice computes
+    long long shared_key_B = mod_exp(A, b, p); // Bob computes
+
+    printf("Alice's private key: %d\n", a);
+    printf("Bob's private key: %d\n", b);
+    printf("Alice sends to Bob: %lld\n", A);
+    printf("Bob sends to Alice: %lld\n", B);
+    printf("Shared key computed by Alice: %lld\n", shared_key_A);
+    printf("Shared key computed by Bob: %lld\n", shared_key_B);
+
+    // If participants sent `xa` instead
+    long long insecure_A = (long long) a * g;
+    long long insecure_B = (long long) b * g;
+
+    printf("\nInsecure exchange:\n");
+    printf("Alice sends to Bob: %lld\n", insecure_A);
+    printf("Bob sends to Alice: %lld\n", insecure_B);
+
+    return 0;
+}
