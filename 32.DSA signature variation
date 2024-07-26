@@ -1,0 +1,55 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <gmp.h>
+
+void generate_dsa_signature(mpz_t p, mpz_t q, mpz_t g, mpz_t x, mpz_t k, mpz_t hash, mpz_t r, mpz_t s) {
+    mpz_t k_inv, temp;
+    mpz_inits(k_inv, temp, NULL);
+    
+    // r = (g^k mod p) mod q
+    mpz_powm(temp, g, k, p);
+    mpz_mod(r, temp, q);
+    
+    // k_inv = k^(-1) mod q
+    mpz_invert(k_inv, k, q);
+    
+    // s = (k_inv * (hash + x * r)) mod q
+    mpz_mul(temp, x, r);
+    mpz_add(temp, temp, hash);
+    mpz_mul(temp, temp, k_inv);
+    mpz_mod(s, temp, q);
+
+    mpz_clears(k_inv, temp, NULL);
+}
+
+int main() {
+    // DSA parameters (p, q, g)
+    mpz_t p, q, g, x, k, hash, r, s;
+    mpz_inits(p, q, g, x, k, hash, r, s, NULL);
+
+    // Sample DSA parameters
+    mpz_set_str(p, "F7E75FDC469067FFDC4E847C51F452DF", 16);
+    mpz_set_str(q, "9760508F15230BCCB292B982A2EB840BF0581CF5", 16);
+    mpz_set_str(g, "6767A3EA25683D0AA17F6FC64D31E0E82074254B", 16);
+    mpz_set_str(x, "10C5F595ECA7F42F21C70B38E244E6D9E99A10C4", 16);
+    mpz_set_str(hash, "9BDBA7F6A08D9F7BFF6E66ECBA9F9E7D2D9CDB7A", 16);
+
+    // Random k for each signature
+    srand(time(NULL));
+    mpz_urandomm(k, gmp_randstate_t state, q);
+
+    // Generate signature
+    generate_dsa_signature(p, q, g, x, k, hash, r, s);
+
+    gmp_printf("Signature (r, s): (%Zd, %Zd)\n", r, s);
+
+    // Generate another signature with a different k
+    mpz_urandomm(k, gmp_randstate_t state, q);
+    generate_dsa_signature(p, q, g, x, k, hash, r, s);
+
+    gmp_printf("Signature with different k (r, s): (%Zd, %Zd)\n", r, s);
+
+    mpz_clears(p, q, g, x, k, hash, r, s, NULL);
+    return 0;
+}
