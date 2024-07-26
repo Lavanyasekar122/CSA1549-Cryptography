@@ -1,0 +1,68 @@
+#include <openssl/des.h>
+#include <stdio.h>
+#include <string.h>
+
+void print_data(const char *title, const void* data, int len) {
+    printf("%s: ", title);
+    const unsigned char *p = (const unsigned char*)data;
+    for (int i = 0; i < len; i++) {
+        printf("%02X ", *p++);
+    }
+    printf("\n");
+}
+
+void ecb_mode(const unsigned char *key, const unsigned char *plaintext) {
+    DES_cblock key_block;
+    DES_key_schedule schedule;
+
+    memcpy(key_block, key, 8);
+    DES_set_key_checked(&key_block, &schedule);
+
+    unsigned char ciphertext[8];
+    unsigned char decryptedtext[8];
+
+    DES_ecb_encrypt((DES_cblock*)plaintext, (DES_cblock*)ciphertext, &schedule, DES_ENCRYPT);
+    print_data("ECB Ciphertext", ciphertext, 8);
+
+    // Introduce an error in the ciphertext
+    ciphertext[0] ^= 0xFF;
+
+    DES_ecb_encrypt((DES_cblock*)ciphertext, (DES_cblock*)decryptedtext, &schedule, DES_DECRYPT);
+    print_data("ECB Decryptedtext with error", decryptedtext, 8);
+}
+
+void cbc_mode(const unsigned char *key, const unsigned char *iv, const unsigned char *plaintext) {
+    DES_cblock key_block;
+    DES_key_schedule schedule;
+    DES_cblock iv_block;
+    unsigned char ciphertext[8];
+    unsigned char decryptedtext[8];
+
+    memcpy(key_block, key, 8);
+    memcpy(iv_block, iv, 8);
+    DES_set_key_checked(&key_block, &schedule);
+
+    DES_ncbc_encrypt(plaintext, ciphertext, 8, &schedule, &iv_block, DES_ENCRYPT);
+    print_data("CBC Ciphertext", ciphertext, 8);
+
+    // Introduce an error in the ciphertext
+    ciphertext[0] ^= 0xFF;
+
+    memcpy(iv_block, iv, 8);
+    DES_ncbc_encrypt(ciphertext, decryptedtext, 8, &schedule, &iv_block, DES_DECRYPT);
+    print_data("CBC Decryptedtext with error", decryptedtext, 8);
+}
+
+int main() {
+    unsigned char key[8] = "examplek";
+    unsigned char iv[8] = {0x12, 0x34, 0x56, 0x78, 0x90, 0xAB, 0xCD, 0xEF};
+    unsigned char plaintext[8] = "example";
+
+    printf("ECB Mode:\n");
+    ecb_mode(key, plaintext);
+
+    printf("\nCBC Mode:\n");
+    cbc_mode(key, iv, plaintext);
+
+    return 0;
+}
