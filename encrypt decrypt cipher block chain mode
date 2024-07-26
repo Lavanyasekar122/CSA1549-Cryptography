@@ -1,0 +1,23 @@
+#include <stdio.h>
+#include <string.h>
+
+void print_data(const char *title, const void* data, int len) {
+    printf("%s: ", title);
+    const unsigned char *p = (const unsigned char*)data;
+    for (int i = 0; i < len; i++) {
+        printf("%02X ", *p++);
+    }
+    printf("\n");
+}
+
+unsigned char sdes_encrypt(unsigned char plaintext, unsigned char key) {
+    // Simplified S-DES encryption (placeholder function)
+    return plaintext ^ key; // XOR encryption for demonstration
+}
+
+unsigned char sdes_decrypt(unsigned char ciphertext, unsigned char key) {
+    // Simplified S-DES decryption (placeholder function)
+    return ciphertext ^ key; // XOR decryption for demonstration
+}
+
+void cbc_encrypt(unsigned char *plaintext, unsigned char *ciphertext, int len, unsigned char key, unsigned
