@@ -1,0 +1,60 @@
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
+#define BLOCK_SIZE 16
+
+void xor_blocks(uint8_t *out, const uint8_t *in1, const uint8_t *in2, size_t length) {
+    for (size_t i = 0; i < length; i++) {
+        out[i] = in1[i] ^ in2[i];
+    }
+}
+
+void encrypt_block(uint8_t *out, const uint8_t *in, const uint8_t *key) {
+    // For simplicity, we'll use XOR as a placeholder for the block cipher encryption
+    xor_blocks(out, in, key, BLOCK_SIZE);
+}
+
+void cbc_mac(uint8_t *mac, const uint8_t *message, size_t length, const uint8_t *key, const uint8_t *iv) {
+    uint8_t block[BLOCK_SIZE];
+    memcpy(block, iv, BLOCK_SIZE);
+
+    for (size_t i = 0; i < length; i += BLOCK_SIZE) {
+        xor_blocks(block, block, message + i, BLOCK_SIZE);
+        encrypt_block(block, block, key);
+    }
+
+    memcpy(mac, block, BLOCK_SIZE);
+}
+
+int main() {
+    uint8_t key[BLOCK_SIZE] = {0x00}; // Example key
+    uint8_t iv[BLOCK_SIZE] = {0x00};  // Initialization vector
+    uint8_t message[BLOCK_SIZE] = "ExampleMessage"; // One-block message
+    uint8_t mac[BLOCK_SIZE];
+
+    // Calculate MAC for the one-block message
+    cbc_mac(mac, message, BLOCK_SIZE, key, iv);
+
+    printf("CBC-MAC for one-block message: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02X ", mac[i]);
+    }
+    printf("\n");
+
+    // Adversary knows the CBC-MAC for the two-block message
+    uint8_t message2[2 * BLOCK_SIZE];
+    memcpy(message2, message, BLOCK_SIZE);
+    xor_blocks(message2 + BLOCK_SIZE, message, mac, BLOCK_SIZE);
+
+    uint8_t mac2[BLOCK_SIZE];
+    cbc_mac(mac2, message2, 2 * BLOCK_SIZE, key, iv);
+
+    printf("CBC-MAC for two-block message: ");
+    for (int i = 0; i < BLOCK_SIZE; i++) {
+        printf("%02X ", mac2[i]);
+    }
+    printf("\n");
+
+    return 0;
+}
