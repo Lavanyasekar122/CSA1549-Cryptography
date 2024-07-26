@@ -1,0 +1,44 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MOD 26
+
+void encrypt(int key[2][2], char* plaintext, char* ciphertext) {
+    int i, j, k;
+    int len = strlen(plaintext);
+    int vector[2];
+    int result[2];
+    
+    for (i = 0; i < len; i += 2) {
+        vector[0] = plaintext[i] - 'a';
+        vector[1] = plaintext[i + 1] - 'a';
+
+        for (j = 0; j < 2; j++) {
+            result[j] = 0;
+            for (k = 0; k < 2; k++) {
+                result[j] += key[j][k] * vector[k];
+            }
+            result[j] %= MOD;
+        }
+
+        ciphertext[i] = result[0] + 'a';
+        ciphertext[i + 1] = result[1] + 'a';
+    }
+    ciphertext[len] = '\0';
+}
+
+int main() {
+    int key[2][2] = {
+        {9, 4},
+        {5, 7}
+    };
+    char plaintext[] = "meet me at the usual place at ten rather than eight oclockx";
+    char ciphertext[50];
+
+    encrypt(key, plaintext, ciphertext);
+
+    printf("Plaintext: %s\n", plaintext);
+    printf("Ciphertext: %s\n", ciphertext);
+
+    return 0;
+}
